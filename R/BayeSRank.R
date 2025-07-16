@@ -1,0 +1,2 @@
+BayeSRank <- function(){
+}
