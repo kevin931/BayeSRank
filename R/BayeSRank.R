@@ -1,9 +1,9 @@
-#' BayeSRank: Bias-Aware Bayesian Rank Aggregation
+#' BayeSRank: Bias-Aware Bayesian Aggregation in Peer and Self Ranking
 #'
-#' Implements the core Gibbs sampling algorithm for the BayeSRank model proposed in
-#' Ruan et al. (XXXX). This method estimates latent performance scores and evaluator bias
+#' Implements the core Gibbs sampling algorithm for the BayeSRank method proposed in
+#' Ruan et al. (XXXX). This method estimates latent performance scores and biases
 #' from noisy ranking data, while preserving ordinal information and accounting for
-#' potential self-evaluation distortions.
+#' potential self-evaluation bias and varying levels of ranking quality.
 #'
 #' This version performs a single-chain run using user-specified priors and does not include
 #' the two-step empirical Bayes procedure. For automatic hyperparameter tuning, see
@@ -11,7 +11,7 @@
 #'
 #' @param n Integer. Number of items/teams to be ranked (equal to the number of rankers).
 #' @param r An \eqn{n \times n} matrix of observed rankings where \code{r[i, j]} denotes the rank
-#'        assigned by ranker \eqn{j} to item \eqn{i}. Diagonal entries typically represent
+#'        assigned by ranker \eqn{j} to item \eqn{i}. Diagonal entries represent
 #'        self-evaluations.
 #' @param M Integer. Number of MCMC iterations.
 #' @param burnin Integer. Number of burn-in samples to discard when summarizing posteriors.
@@ -84,13 +84,15 @@ BayeSRank <- function(n,
                       r,
                       M,
                       burnin, 
-                     W,             # W=initial Omega matrix
-                     mu0,
-                     mubeta0,
-                     beta0,
-                     Var_beta0,
-                     Var_epsilon0, minbeta, maxbeta, 
-                     a,b,c,d
+                      W,             # W=initial Omega matrix
+                      mu0,
+                      mubeta0,
+                      beta0,
+                      Var_beta0,
+                      Var_epsilon0, 
+                      minbeta, 
+                      maxbeta, 
+                      a,b,c,d
 ){
   
   # Dimensions of the rank matrix
