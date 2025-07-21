@@ -45,7 +45,38 @@
 #' @seealso \code{\link{bayesrank_2step}} for a two-step version with automatic prior tuning.
 #'
 #' @references
-#' Ruan, K., Wang, X., & Smith, M. (XXXX). *Are We Ranking Fairly? A Bias-Aware Bayesian Rank Aggregation Method for Peer- and Self-Evaluations.*
+#' Ruan, H., Wang, K., & Wang, X. (XXXX). *Bias meets Bayes:  A Bayesian Aggregation Method for Peer and Self Ranking*
+##' @examples
+#' # Simulate toy ranking data
+#' set.seed(123)
+#' n <- 5
+#' true_rank <- 1:n
+#' rank_matrix <- matrix(sample(1:n, n * n, replace = TRUE), n, n)
+#'
+#' initW <- matrix(rnorm(n^2), n, n)
+#' sorted_W <- apply(initW, 2, sort, decreasing = TRUE)
+#' initW <- mapply(function(sorted_col, rank_col) sorted_col[rank_col],
+#'                 as.data.frame(sorted_W),
+#'                 as.data.frame(rank_matrix))
+#' initW <- matrix(unlist(initW), nrow = n)
+#'
+#' res <- BayeSRank(
+#'   n = n,
+#'   r = rank_matrix,
+#'   M = 1000,
+#'   burnin = 200,
+#'   W = initW,
+#'   mu0 = rnorm(n),
+#'   mubeta0 = rnorm(1),
+#'   beta0 = NULL,
+#'   Var_beta0 = 1,
+#'   Var_epsilon0 = 1,
+#'   minbeta = -10,
+#'   maxbeta = 10,
+#'   a = 0.1, b = 0.1,
+#'   c = 0.1, d = 0.1
+#' )
+#' str(res$post_mean_mus)
 #'
 #' @export
 
@@ -229,34 +260,3 @@ BayeSRank <- function(n,
   return(out)
 }  
 
-#' @examples
-#' # Simulate toy ranking data
-#' set.seed(123)
-#' n <- 5
-#' true_rank <- 1:n
-#' rank_matrix <- matrix(sample(1:n, n * n, replace = TRUE), n, n)
-#'
-#' initW <- matrix(rnorm(n^2), n, n)
-#' sorted_W <- apply(initW, 2, sort, decreasing = TRUE)
-#' initW <- mapply(function(sorted_col, rank_col) sorted_col[rank_col],
-#'                 as.data.frame(sorted_W),
-#'                 as.data.frame(rank_matrix))
-#' initW <- matrix(unlist(initW), nrow = n)
-#'
-#' res <- BayeSRank(
-#'   n = n,
-#'   r = rank_matrix,
-#'   M = 1000,
-#'   burnin = 200,
-#'   W = initW,
-#'   mu0 = rnorm(n),
-#'   mubeta0 = rnorm(1),
-#'   beta0 = NULL,
-#'   Var_beta0 = 1,
-#'   Var_epsilon0 = 1,
-#'   minbeta = -10,
-#'   maxbeta = 10,
-#'   a = 0.1, b = 0.1,
-#'   c = 0.1, d = 0.1
-#' )
-#' str(res$post_mean_mus)
