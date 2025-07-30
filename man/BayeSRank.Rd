@@ -2,18 +2,120 @@
 % Please edit documentation in R/BayeSRank.R
 \name{BayeSRank}
 \alias{BayeSRank}
-\title{BayeSRank: Bias-Aware Rank Aggregation}
+\title{BayeSRank: Bias-Aware Bayesian Aggregation in Peer and Self Ranking}
 \usage{
-BayeSRank(x)
+BayeSRank(
+  n,
+  r,
+  M,
+  burnin,
+  W,
+  mu0,
+  mubeta0,
+  beta0,
+  Var_beta0,
+  Var_epsilon0,
+  minbeta,
+  maxbeta,
+  a,
+  b,
+  c,
+  d
+)
 }
 \arguments{
-\item{x}{This is an}
+\item{n}{Integer. Number of items/teams to be ranked (equal to the number of rankers).}
+
+\item{r}{An \eqn{n \times n} matrix of observed rankings where \code{r[i, j]} denotes the rank
+assigned by ranker \eqn{j} to item \eqn{i}. Diagonal entries represent
+self-evaluations.}
+
+\item{M}{Integer. Number of MCMC iterations.}
+
+\item{burnin}{Integer. Number of burn-in samples to discard when summarizing posteriors.}
+
+\item{W}{Numeric \eqn{n \times n} matrix. Initial latent score matrix used in data augmentation.}
+
+\item{mu0}{Numeric vector of length \code{n}. Initial values for latent team-level performance \eqn{\mu_i}.}
+
+\item{mubeta0}{Numeric scalar. Initial value for the mean of evaluator bias parameters.}
+
+\item{beta0}{Not used. Placeholder retained for compatibility.}
+
+\item{Var_beta0}{Numeric scalar. Initial variance for evaluator bias \eqn{\beta_j}.}
+
+\item{Var_epsilon0}{Numeric scalar or vector of length \code{n}. Initial error variance.}
+
+\item{minbeta, maxbeta}{Numeric scalars. Lower and upper bounds for truncated normal prior
+on evaluator bias parameters.}
+
+\item{a, b, c, d}{Numeric scalars. Hyperparameters for the inverse-gamma priors:
+\itemize{
+\item \code{a}, \code{b}: shape and rate for \eqn{\text{Var}(\beta_j)}
+\item \code{c}, \code{d}: shape and rate for \eqn{\text{Var}(\epsilon_j)}
+}}
+}
+\value{
+A list with posterior summaries and evaluation metrics:
+\describe{
+\item{\code{Beta}}{Posterior samples of bias terms \eqn{\beta_j} after burn-in.}
+\item{\code{Var_beta}}{Posterior samples of bias variance.}
+\item{\code{Var_epsilon}}{Posterior samples of error variance.}
+\item{\code{post_mean_mus}}{Posterior means of latent team performance \eqn{\mu_i}.}
+\item{\code{post_mean_mubeta}}{Posterior mean of bias prior mean \eqn{\mu_\beta}.}
+\item{\code{post_median_Varbeta}}{Posterior median of \eqn{\text{Var}(\beta)}.}
+\item{\code{corr_spearman}}{Spearman correlation between estimated ranks and true ranks.}
+\item{\code{top1rate}}{Proportion of simulations correctly identifying the top team.}
+\item{\code{top3rate}}{Proportion correctly identifying the top-3 teams.}
+}
 }
 \description{
-This is the bespoke BayeSRank algorithm introduced in Ruan et al (XXXX) paper.
-This implementation does not contain the two-step procedure. If you love
-two-stepping, please use XXX.
+Implements the core Gibbs sampling algorithm for the BayeSRank method proposed in
+Ruan et al. (XXXX). This method estimates latent performance scores and biases
+from noisy ranking data, while preserving ordinal information and accounting for
+potential self-evaluation bias and varying levels of ranking quality.
+}
+\details{
+This version performs a single-chain run using user-specified priors and does not include
+the two-step empirical Bayes procedure. For automatic hyperparameter tuning, see
+\code{\link[=bayesrank_2step]{bayesrank_2step()}}.
+}
+\examples{
+# Simulate toy ranking data
+set.seed(123)
+n <- 5
+true_rank <- 1:n
+rank_matrix <- matrix(sample(1:n, n * n, replace = TRUE), n, n)
+
+initW <- matrix(rnorm(n^2), n, n)
+sorted_W <- apply(initW, 2, sort, decreasing = TRUE)
+initW <- mapply(function(sorted_col, rank_col) sorted_col[rank_col],
+                as.data.frame(sorted_W),
+                as.data.frame(rank_matrix))
+initW <- matrix(unlist(initW), nrow = n)
+
+res <- BayeSRank(
+  n = n,
+  r = rank_matrix,
+  M = 1000,
+  burnin = 200,
+  W = initW,
+  mu0 = rnorm(n),
+  mubeta0 = rnorm(1),
+  beta0 = NULL,
+  Var_beta0 = 1,
+  Var_epsilon0 = 1,
+  minbeta = -10,
+  maxbeta = 10,
+  a = 0.1, b = 0.1,
+  c = 0.1, d = 0.1
+)
+str(res$post_mean_mus)
+
+}
+\references{
+Ruan, H., Wang, K., & Wang, X. (XXXX). \emph{Bias meets Bayes:  A Bayesian Aggregation Method for Peer and Self Ranking}
 }
 \seealso{
-The two-step function.
+\code{\link{bayesrank_2step}} for a two-step version with automatic prior tuning.
 }

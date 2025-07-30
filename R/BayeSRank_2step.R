@@ -74,25 +74,25 @@ bayesrank_2step <- function(rank_matrix,
                             step1_c = 0.1, step1_d = 0.1,
                             # ↓ random‑seed helper so runs are reproducible
                             seed = NULL) {
-  
+
   if (!is.null(seed)) set.seed(seed)
-  
+
   ## --------------------------------------------------------------------------
   ## 0.  Build or accept an initial W  (un‑ordered latent scores)
   ## --------------------------------------------------------------------------
   n_teams <- nrow(rank_matrix)
-  
+
   if (is.null(init_W)) {
     init_W <- matrix(rnorm(n_teams^2, mean = 0, sd = 1), nrow = n_teams)
   }
-  
+
   ## Re–order each column of W so that larger latent utility ⇒ higher rank
   sorted_W <- apply(init_W, 2, sort, decreasing = TRUE)
   initW <- mapply(function(sorted_col, rank_col) sorted_col[rank_col],
                   as.data.frame(sorted_W),
                   as.data.frame(rank_matrix))
   initW <- matrix(unlist(initW), nrow = n_teams)
-  
+
   ## --------------------------------------------------------------------------
   ## 1.  Preliminary chain with weak / diffuse priors
   ## --------------------------------------------------------------------------
@@ -109,7 +109,7 @@ bayesrank_2step <- function(rank_matrix,
                       maxbeta     = step1_maxbeta,
                       a = step1_a, b = step1_b,
                       c = step1_c, d = step1_d)
-  
+
   ## Empirical tuning from pilot output
   Beta.bar <- mean(prelim$Beta)
   Beta.sd  <-  sd(prelim$Beta)
@@ -117,7 +117,7 @@ bayesrank_2step <- function(rank_matrix,
   maxBeta_est <- Beta.bar + 3 * Beta.sd
   varBeta_est    <- median(prelim$Var_beta)
   varEpsilon_est <- median(prelim$Var_epsilon)
-  
+
   ## Moment‑match Γ(shape,rate) priors for 1/σ²
   if (!exists("find_shape_rate", mode = "function")) {
     find_shape_rate <- function(mean, sd) {
@@ -128,8 +128,8 @@ bayesrank_2step <- function(rank_matrix,
   }
   IG_Beta_est    <- find_shape_rate(varBeta_est,    sd(prelim$Var_beta))
   IG_Epsilon_est <- find_shape_rate(varEpsilon_est, sd(prelim$Var_epsilon))
-  
-  
+
+
   ## --------------------------------------------------------------------------
   ## 2.  Main chain with tuned hyper‑priors
   ## --------------------------------------------------------------------------
@@ -146,8 +146,8 @@ bayesrank_2step <- function(rank_matrix,
                    maxbeta     = maxBeta_est,
                    a = IG_Beta_est$shape, b = IG_Beta_est$rate,
                    c = IG_Epsilon_est$shape, d = IG_Epsilon_est$rate)
-  
-  
+
+
     return(res)
 }
 
